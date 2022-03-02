@@ -1,0 +1,32 @@
+server:
+  port: 8080 # 服务端口
+
+spring:
+  profiles:
+    active: dev # 环境设置
+  #application:
+   # name: service_edu # 服务名
+  datasource: # mysql数据库连接
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://192.168.56.10:3306/miaosha?serverTimezone=GMT%2B8
+    username: root
+    password: root
+  redis:
+    host: 192.168.56.10
+    port: 6379
+
+  #spring:
+  jackson: #返回json的全局时间格式
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+
+
+#mybatis日志
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+  mapper-locations: classpath:com/atguigu/guli/service/edu/mapper/xml/*.xml
+
+
+
