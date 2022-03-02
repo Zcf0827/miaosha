@@ -13,4 +13,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface StockService extends IService<Stock> {
 
+    int updateStockByOptimistic(Stock stock);
 }

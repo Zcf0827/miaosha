@@ -13,4 +13,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface TradeOrderService extends IService<TradeOrder> {
 
+    void saveSeckkill(String uid, String vid, String name);
 }

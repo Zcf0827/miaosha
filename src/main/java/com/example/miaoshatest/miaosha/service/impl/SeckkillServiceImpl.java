@@ -2,9 +2,11 @@ package com.example.miaoshatest.miaosha.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.example.miaoshatest.miaosha.entity.Stock;
 import com.example.miaoshatest.miaosha.entity.TradeOrder;
 import com.example.miaoshatest.miaosha.entity.Vedios;
 import com.example.miaoshatest.miaosha.service.SeckkillService;
+import com.example.miaoshatest.miaosha.service.StockService;
 import com.example.miaoshatest.miaosha.service.TradeOrderService;
 import com.example.miaoshatest.miaosha.service.VediosService;
 import org.redisson.api.RSemaphore;
@@ -15,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -25,6 +26,9 @@ public class SeckkillServiceImpl implements SeckkillService {
 
     @Autowired
     private VediosService vediosService;
+
+    @Autowired
+    private StockService stockService;
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -72,19 +76,35 @@ public class SeckkillServiceImpl implements SeckkillService {
             boolean semaphoreCount = semaphore.tryAcquire(1, 100, TimeUnit.MILLISECONDS);
             //下单
             if(semaphoreCount){
-                TradeOrder tradeOrder = new TradeOrder();
-                tradeOrder.setMemberId(uid);
-                tradeOrder.setCourseId(vid);
-                tradeOrder.setOrderNo(IdWorker.getTimeId().substring(10));
-                tradeOrder.setNickname(sekkvedio.getName());
-                tradeOrder.setGmtCreate(new Date());
-                tradeOrder.setGmtModified(new Date());
-                tradeOrderService.save(tradeOrder);
+                tradeOrderService.saveSeckkill(uid, vid, sekkvedio.getName());
+            }else{
+                return "秒杀失败";
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         return "库存剩余" + semaphore.availablePermits() + "";
+    }
+
+    @Override
+    public String killCAS(String uid, String vid) {
+
+        //校验库存
+        Stock stock = stockService.getById(vid);
+        if(stock == null || stock.getCount() == stock.getSale()){
+            return "秒杀失败";
+        }
+        boolean success = saleStockOptimistic(stock);
+        if(!success){
+            return "秒杀失败";
+        }
+        //tradeOrderService.saveSeckkill(uid, vid, stock.getName());
+        return "秒杀成功，库存还剩" + (stock.getCount()- stock.getSale()-1) + "件";
+    }
+
+    private boolean saleStockOptimistic(Stock stock) {
+        int count = stockService.updateStockByOptimistic(stock);
+        return count != 0;
     }
 }
